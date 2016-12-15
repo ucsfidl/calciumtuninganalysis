@@ -8,7 +8,7 @@ if info.frame(1)==0
     info.line=info.line(2:end);
     save([fname '.mat'],'info','-append');
 end
-
+%% match stim
 if ~isfield(info,'stimtype')   %read psychostim stim info to match TTL event recorded in
     file=dir([fname '.sbx']);
     recordedtime=file.date;
@@ -51,13 +51,13 @@ else
     display('no ball info');
     movement=0;
 end
-
-if exist([fname '_eye.mat'])
-    movement=movement+10;
-    if ~exist([fname '.eye'])
-        sbxeyemotion([fname '_eye.mat']) ;
-    end
-    display('with movement info, will analyze running later');
-else
-    display('no eye info');
-end
+%% Do not analysis eye info at the moment 
+% if exist([fname '_eye.mat'])
+%     movement=movement+10;
+%     if ~exist([fname '.eye'])
+%         sbxeyemotion([fname '_eye.mat']) ;
+%     end
+%     display('with movement info, will analyze running later');
+% else
+%     display('no eye info');
+% end

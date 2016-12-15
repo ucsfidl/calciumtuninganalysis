@@ -10,14 +10,14 @@ close all;clear all;global info;
 
 %% load calcium signal and open recorded image
 [f,p]=uigetfile('.signals','load calcium signal data .signals');
-cd(p);
-load(f,'-mat');
+
+load(fullfile(p,f),'-mat');
 if strfind(f,'pick')
     load([f(1:strfind(f,'pick')-1) '.signals'], '-mat');
 end
 
-    temp=uigetfile('*.sbx','Pick the correspondent recording file');
-    fname=strtok(temp,'.');
+    [temp,path]=uigetfile('*.sbx','Pick the correspondent recording file');
+    fname=fullfile(path,strtok(temp,'.'));
 
 if ~exist('sig')
     sig=sig_chunk;
@@ -130,16 +130,14 @@ end
 
 if info.steps(2)>1
     [ sigF,variant,hparse]=parseF(sigT,window,matrix);
-
 else
     sigF=sigT; % sigF:seg,rep,Var,ncell
     variant=strcmp(info.var(1),'Orientation');
 end
 save([fname '_' num2str(numel(Cor)) 'signals.mat'],'sigF','matrix','window','Cor');
 
-
 %% plot figures and calculate Orientation selection or Contrast invariant
-save([fname '_' num2str(numel(Cor)) 'signals.mat'],'sigF','matrix','window','Cor');
+%save([fname '_' num2str(numel(Cor)) 'signals.mat'],'sigF','matrix','window','Cor');
 
 drawingoption=(~isempty(matrix))*10+variant;
 

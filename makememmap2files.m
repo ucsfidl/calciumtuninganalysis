@@ -2,9 +2,14 @@ function fullname=makememmap2files;
 %% define the name
 files = dir('*.sbx');
 path=pwd;
-newpath=fullfile('\\MPS-ZFS\data\jsun',path(3:end));
+if ~strfind(path,'\\MPS-ZFS')
+    newpath=fullfile('\\MPS-ZFS\data\jsun',path(3:end));
+else
+    newpath=path;
+end
 newname=[files(1).name(1:end-5) 'x_memmap.mat'];
 fullname=fullfile(newpath,newname);
+
 if exist(fullname,'file')
     disp([fullname 'already existing']);
     return;
@@ -38,15 +43,15 @@ for i=1:numel(files)
         z =sbxread(fn,j,1);
         z= squeeze(z);
         data.Y(:,:,T+j+1) = circshift(z,info.aligned.T(j+1,:)+[u v]); % align the image
-        V=V+((double(data.Y(:,:,i+1)-m(:,:,i)))/fac).^2;
+        V=V+((double(data.Y(:,:,i+1)-m(:,:,i)))/fac).^2; 
         if mod(j,500)==0
             fprintf('File %.2f Frame %d/%d for %.2f seconds\n ',i,j,info.max_idx,toc);
         end
     end
     save([fn '.align'],'V','-append');
     ratio=T/(T+eachsize(i));
-    data.V=data.V*ratio+V*(1-ratio);
-    
+    data.V=data.V*ratio+circshift(V,[u v])*(1-ratio);
+    data.m=data.m*ratio+circshift(m(:,:,i),[u v])*(1-ratio)
     T=T+eachsize(i);
 end
 %assert(T==info.max_idx,'the total image size is not matched!')

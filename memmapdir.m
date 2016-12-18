@@ -2,8 +2,8 @@ function fname=memmapdir(s)
 clc;close all; clearvars -except s
 
 memmapchoice=menu('Which type?','Single file','Multiple files','Multiple planes multiple files')
-%sbxballmotiondir;
-%sbxeyemotiondir;
+sbxballmotiondir;
+sbxeyemotiondir;
 
 
 % sbxaligndir;
@@ -30,11 +30,6 @@ switch memmapchoice
             fname{i}=memmap(fn);
             disp(sprintf('finished %s in %d seconds',fname{i},toc));
         end
-        
-        newname=makememmap2files;
-        pos = strfind(newname,'_memmap.mat');
-        fname=memmap(newname(1:pos-1));
-        disp(sprintf('finished %s in %d seconds',fname,toc));
     case 2 %Multiple files
         sbxaligndir;
         newname=makememmap2files;

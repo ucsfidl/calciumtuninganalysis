@@ -4,7 +4,7 @@ function fname=memmap(nam,patchf);
 %addpath(genpath(path_to_package));
 %close all;
 
-magnification=1;
+magnification=2;
 if ~exist([nam '_memmap.mat'],'file')
     makememmap(nam);
 end
@@ -36,17 +36,17 @@ end
 % patch_size = [ceil(sizY(1)/patchf(1)*1.1),ceil(sizY(2)/patchf(2)*1.1)];                   % size of each patch along each dimension (optional, default: [32,32])
 % overlap = [ceil(sizY(1)/patchf(1)*.05),ceil(sizY(2)/patchf(2)*.05)];                        % amount of overlap in each dimension (optional, default: [4,4])
 
-patch_size = [64,64];                   % size of each patch along each dimension (optional, default: [32,32])
-overlap = [8,8];                        % amount of overlap in each dimension (optional, default: [4,4])
+patch_size = [128,64];                   % size of each patch along each dimension (optional, default: [32,32])
+overlap = [16,8];                        % amount of overlap in each dimension (optional, default: [4,4])
 
 patches = construct_patches(sizY(1:end-1),patch_size,overlap);
 %K = ceil(sizY(1)*sizY(2)/10000/prod(patchf))    % number of components to be found
 %K=ceil(40/prod(patchf));
 K=2;
-tau = 2*magnification;                                          % std of gaussian kernel (half width/height of neuron)
+tau = [3*magnification,5*magnification];          % std of gaussian kernel (half width/height of neuron)
 p = 0;                                            % order of autoregressive system (p = 0 no dynamics, p=1 just decay, p = 2, both rise and decay)
 merge_thr = 0.6;                                  % merging threshold
-tsub=32;
+tsub=20;
 options = CNMFSetParms(...
     'd1',sizY(1),'d2',sizY(2),...
     'search_method','ellipse','dist',3,...      % search locations when updating spatial components
@@ -54,10 +54,12 @@ options = CNMFSetParms(...
     'temporal_iter',2,...                       % number of block-coordinate descent steps
     'ssub',magnification,...
     'tsub',tsub,...
-    'fudge_factor',0.98,...                     % bias correction for AR coefficients
+    'max_size', 6*magnification,...
     'merge_thr',merge_thr,...                    % merging threshold
     'gSig',tau...
     );
+%     'fudge_factor',0.98,...                     % bias correction for AR coefficients
+
 %display(sprintf('CNMFparms done %d min',round(toc/60)));
 
 %% Run on patches
@@ -95,7 +97,7 @@ catch
     [Coor,json_file] = plot_contours(A,V,contour_threshold,1);
 end
 %% save signals into different files
-fname=sprintf('%s_%dcell_tau%d_tsub%d',nam,K_m,tau,tsub);
+fname=sprintf('%s_%dcell_tau%d_%d_tsub%d',nam,K_m,tau(1),tau(2),tsub);
 
 sig=sig';
 save([fname '.signals'],'sig','S_df');

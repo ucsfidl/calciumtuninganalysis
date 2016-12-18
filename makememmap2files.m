@@ -33,11 +33,14 @@ for i=1:numel(files)
     fac=sqrt(info.max_idx);
     tic
     if i==1
+        data.m=zeros(info.sz);      
         data.Y=zeros([info.sz info.max_idx],'uint16');
         data.V=zeros(info.sz);
         u=0;v=0;
     else
         [u v] = fftalign(m(:,:,i),m(:,:,1));
+        figure('Name',['aligned file#' num2str(i)]);
+        imshowpair(circshift(squeeze(m(:,:,i)),[u v]),squeeze(m(:,:,1)))
     end
     for j=0:info.max_idx-1
         z =sbxread(fn,j,1);
@@ -45,13 +48,13 @@ for i=1:numel(files)
         data.Y(:,:,T+j+1) = circshift(z,info.aligned.T(j+1,:)+[u v]); % align the image
         V=V+((double(data.Y(:,:,i+1)-m(:,:,i)))/fac).^2; 
         if mod(j,500)==0
-            fprintf('File %.2f Frame %d/%d for %.2f seconds\n ',i,j,info.max_idx,toc);
+            fprintf('File %d Frame %d/%d for %.2f seconds\n ',i,j,info.max_idx,toc);
         end
     end
     save([fn '.align'],'V','-append');
     ratio=T/(T+eachsize(i));
     data.V=data.V*ratio+circshift(V,[u v])*(1-ratio);
-    data.m=data.m*ratio+circshift(m(:,:,i),[u v])*(1-ratio)
+    data.m=data.m*ratio+circshift(double(m(:,:,i)),[u v])*(1-ratio)
     T=T+eachsize(i);
 end
 %assert(T==info.max_idx,'the total image size is not matched!')

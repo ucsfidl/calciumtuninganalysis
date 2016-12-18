@@ -8,7 +8,9 @@ end
 for(i=1:length(d))
     try
         fn = d(i).name;
-        if(exist([fn(1:strfind(fn,'_eye')-1) '.eye'])==0)
+        vars = whos('-file',fn);
+
+        if ((exist([fn(1:strfind(fn,'_eye')-1) '.eye'])==0) && ~ismember('eye', {vars.name}))
            display(sprintf('extract eye motion for %s',fn))
            sbxeyemotion(fn);
         else

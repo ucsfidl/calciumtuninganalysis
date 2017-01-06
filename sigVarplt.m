@@ -1,4 +1,4 @@
-function h=sigVarplt(sigF,window,matrix,Cor); 
+function [h,Gd]=sigVarplt(sigF,window,matrix,Cor); 
 %sigF seg*rep*Var*ncell
 %maxtrix rep*Var
 global info;
@@ -6,6 +6,8 @@ name=info.var(strcmp(info.var,'None')==0);
 seg=size(sigF,1);
 rep=size(sigF,2);
 ncell=size(sigF,4);
+Gd=[];
+
 if numel(info.var)>1
 Var(1)=info.steps(1);
 Var(2)=info.steps(2);
@@ -58,6 +60,8 @@ for j=1:page
         text(seg*1.1,ymax,['Ori' num2str(k)],'VerticalAlignment','bottom');
 
         axis on;drawnow;
+        answer = inputdlg('Enter gd cells','Pick gd cells',[1 80],{num2str(Cor(nth))});
+        Gd=[Gd str2num(answer{1})];
     end
 
 end

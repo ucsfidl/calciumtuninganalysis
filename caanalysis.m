@@ -16,8 +16,10 @@ if strfind(f,'pick')
     load([f(1:strfind(f,'pick')-1) '.signals'], '-mat');
 end
 
-    [temp,path]=uigetfile('*.sbx','Pick the correspondent recording file');
-    fname=fullfile(path,strtok(temp,'.'));
+[temp,path]=uigetfile('*.sbx','Pick the corresponding sbx file');
+fname=fullfile(path,strtok(temp,'.'));
+
+multiplane=2-menu('is it part of the multiplane data?','Yes','No');
 
 if ~exist('sig')
     sig=sig_chunk;
@@ -39,7 +41,8 @@ sig=sig(:,Cor);
 movement=preprocess(fname);
 CAframeHz =info.resfreq/info.recordsPerBuffer;
 CAlineHz = info.config.lines;
-stim=zeros(1,info.max_idx); %just for plotting purpose,assign stimtype to all the ON frames
+%just for plotting purpose,assign stimtype to all the ON frames
+stim=zeros(1,info.max_idx+1); 
 for i=1:(numel(info.frame)/2)
     stim(info.frame(i*2-1):info.frame(i*2))=info.stimtype(i);
 end
@@ -53,10 +56,20 @@ if movement
     end
     % load([fname '.eye'],'-mat');
     sp=conv(speed,ones(1,ceil(CAframeHz*1))/ceil(CAframeHz*1),'same'); %conv the speed into with a 1s filter
-    velocity=interp1(0:1/2:info.max_idx, sp(1:info.max_idx*2+1),1:info.max_idx); % downsampling the speed into the frame num
+    if numel(sp) >= info.max_idx*2
+        velocity=interp1(0:1/2:info.max_idx, sp(1:info.max_idx*2+1),1:info.max_idx); % downsampling the speed into the frame num
+    else
+        velocity=sp;
+    end
 else
     velocity=[];
 end
+%% 
+
+if multiplane
+    sig = interp(sig,2);
+end
+    
 hsig=sigplt(sig,[stim/max(stim);velocity/max(velocity)],Cor); %
 % baseline=prctile(sig,20,1);
 % sig=sig./repmat(baseline,size(sig,1),1)-1;
@@ -160,11 +173,11 @@ switch drawingoption
         SI.DSI=calDSI(SI.peak);
         SI.gOSI=calgOSI(SI.peak);
         
-        hpk(2)=figure('Name','orientation tuning under best contrast');hold on;        
+        hpk(2)=figure('Name','orientation tuning under best contrast');hold on;
         fitplt(SI.peak,[],Cor);
         
     case 2 %'no running with both contrast&orientation map'
-        hsigF=sigVarplt(sigF,window,[],Cor);  % sigF:seg,rep,Var,ncell
+        [hsigF,Gd]=sigVarplt(sigF,window,[],Cor);  % sigF:seg,rep,Var,ncell
         [SI.peak,~,SI.error]=cal_ER(sigF,window);%peak:1*Var*ncell
         SI.peak=reshape(SI.peak,info.steps(2),info.steps(1),ncell);
         SI.error=reshape(SI.error,info.steps(2),info.steps(1),ncell);
@@ -186,7 +199,7 @@ switch drawingoption
         hsigF=sigFplt(sigF,matrix,window,Cor);  % sigF:seg,rep,Var,ncell
         SI.peakR=fixpeak(SI.peakR);
         SI.peakS=fixpeak(SI.peakS);
-
+        
         
         hpk(1)=figure('Name','Contrast tuning under best orientation-running');hold on;
         hpk(1)=fitplt(cat(1,SI.peakR,SI.peakS),cat(1,SI.errorR,SI.errorS),Cor);
@@ -198,12 +211,12 @@ switch drawingoption
         hpk(1)=polarplt(cat(1,SI.peakR,SI.peakS),Cor);
         
         
-        SI.OSI_R=calOSI(SI.peakR);        
-        SI.OSI_S=calOSI(SI.peakS);        
+        SI.OSI_R=calOSI(SI.peakR);
+        SI.OSI_S=calOSI(SI.peakS);
         SI.gOSI_R=calgOSI(SI.peakR);
         SI.gOSI_S=calgOSI(SI.peakS);
         SI.DSI_R=calDSI(SI.peakR);
-        SI.DSI_S=calDSI(SI.peakS);  
+        SI.DSI_S=calDSI(SI.peakS);
         
         hpk(2)=figure('Name','OSIcomparison');hold on;
         scatter(SI.gOSI_S(:),SI.gOSI_R(:),'jitter','on', 'jitterAmount', 0.15);
@@ -236,7 +249,7 @@ switch drawingoption
         hpk(2)=polarplt(cat(1,SI.peakR,SI.peakS),Cor);
         % SI.peakR contrast*ori*ncell
         
-        SI.OSI_R=calOSI(SI.peakR);        
+        SI.OSI_R=calOSI(SI.peakR);
         SI.OSI_S=calOSI(SI.peakS);
         
         SI.gOSI_R=calgOSI(SI.peakR);
@@ -255,8 +268,8 @@ end
 % end
 
 mark=findstr(fname,'_');
-date=fname(mark(1)+1:mark(1)+3);
-serial=fname(mark(2)+1:mark(2)+3);
+date=fname(mark(1)+1:mark(2)-1);
+serial=fname(mark(2)+1:end);
 folder=fullfile([ date '-' serial ],['picked' num2str(numel(Cor))],['drawingoption' num2str(drawingoption)]);
 if ~exist(folder,'dir')
     mkdir(folder);
@@ -273,16 +286,18 @@ for i=1:numel(hpk)
 end
 
 if exist('hrun')
-for i=1:numel(hrun)
-    saveas(hrun(i),fullfile(folder,hrun(i).Name),'png');
-end
+    for i=1:numel(hrun)
+        saveas(hrun(i),fullfile(folder,hrun(i).Name),'png');
+    end
 end
 
 if exist('hparse')c
     for i=1:numel(hparse)
-    saveas(hparse(i),fullfile(folder,hparse(i).Name),'png');
+        saveas(hparse(i),fullfile(folder,hparse(i).Name),'png');
     end
 end
 if exist('hpick')
     saveas(hpick,fullfile(folder,hpick.Name),'png');
 end
+close all;
+

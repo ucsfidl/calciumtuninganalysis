@@ -6,8 +6,15 @@ ncell=size(peak,dim);
 ori=size(peak,dim-1);
 type=size(peak,dim-2);
 
+
+
 if ~(dim==3)
        peak=reshape(peak,[],ori,ncell);
+end
+
+if mod(ori,2)   %if there is blank stimulus
+    ori=ori-1;
+    peak = peak(:,1:ori,:);
 end
 
 %peak contrast*ori*ncell

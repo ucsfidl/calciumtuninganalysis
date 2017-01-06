@@ -37,7 +37,7 @@ for j=1:ncell
         e.Color=color(n,:);
     end
     title(['cell' num2str(Cor(j))]);
-    %axis off
+    axis off
 end
 
 subplot('position',[xpos(mod(ncell,col)+1) ypos(floor((j-1)/col)+1) xwidth yheight]);hold on

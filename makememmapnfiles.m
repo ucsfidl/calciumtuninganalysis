@@ -30,10 +30,10 @@ for i=1:numel(files)
     fn=files(i).name(1:end-4);
     sbxread(fn,1,1);% read one frame to read the header of the image sequence
     m(:,:,i)=info.aligned.m;
-    eachsize(i)=info.max_idx;
+    eachsize(i)=info.max_idx+1;
     
     V=zeros(info.sz);
-    fac=sqrt(info.max_idx);
+    fac=sqrt(info.max_idx+1);
     tic
     if i==1
         data.m=zeros(info.sz);
@@ -51,7 +51,7 @@ for i=1:numel(files)
         img = circshift(z,info.aligned.T(j+1,:)+[u v]); % align the image
         data.Y(:,:,T+j+1) = img;
         V=V+((double(img-m(:,:,i)))/fac).^2;
-        if mod(j,500)==0
+        if mod(j,1000)==0
             fprintf('File %d Frame %d/%d for %.2f seconds\n ',i,j,info.max_idx,toc);
         end
     end

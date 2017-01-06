@@ -10,6 +10,9 @@ if ~(dim==3)
 end
     
 %peak contrast*ori*ncell
+if mod(ori,2)   %if with a blank stim
+    ori=ori-1;
+end
 
 [preferred,preferred_dir]=max(peak,[],2);
 oppo_dir=mod(preferred_dir+ori/2-1,ori)+1;

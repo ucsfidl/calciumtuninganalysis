@@ -1,19 +1,27 @@
-function fname=memmap(nam,patchf);
+function fname=memmap(nam,magnification,picsiz);
 %% load file
 %path_to_package = 'C:\Users\kraken\Documents\MATLAB\ca_source_extraction\utilities';   % path to the folder that contains the package
 %addpath(genpath(path_to_package));
 %close all;
 
-magnification=2;
-if ~exist([nam '_memmap.mat'],'file')
-    makememmap(nam);
-end
+starttime=datetime;
 data = matfile([nam '_memmap.mat'],'Writable',true);
+if nargin<2
+    try
+        magnification=data.magnification;
+    catch
+        magnification=2;
+    end
+end
+if nargin<3
+    picsiz=[240 600 100 786-5]; %% first two for vertical axis: 1-768
+    %bidirection [10 758 120 768]
+end
 
 %% Set parameters
 %tic
 % try
-%     sbxread(nam,1,1);
+%     sbxread(nam,1,1);global info;magnification=info.config.magnification;
 % catch
 %     filenam=dir('*.sbx');
 %     display(filenam(1).name);
@@ -36,14 +44,13 @@ end
 % patch_size = [ceil(sizY(1)/patchf(1)*1.1),ceil(sizY(2)/patchf(2)*1.1)];                   % size of each patch along each dimension (optional, default: [32,32])
 % overlap = [ceil(sizY(1)/patchf(1)*.05),ceil(sizY(2)/patchf(2)*.05)];                        % amount of overlap in each dimension (optional, default: [4,4])
 
-patch_size = [128,64];                   % size of each patch along each dimension (optional, default: [32,32])
-overlap = [16,8];                        % amount of overlap in each dimension (optional, default: [4,4])
-
-patches = construct_patches(sizY(1:end-1),patch_size,overlap);
+patch_size = [128,100];                   % size of each patch along each dimension (optional, default: [32,32])
+overlap = [12,8];                        % amount of overlap in each dimension (optional, default: [4,4])
+patches = construct_partial_patches(picsiz,patch_size,overlap);
 %K = ceil(sizY(1)*sizY(2)/10000/prod(patchf))    % number of components to be found
 %K=ceil(40/prod(patchf));
-K=2;
-tau = [3*magnification,5*magnification];          % std of gaussian kernel (half width/height of neuron)
+K=5;
+tau = [5,3]*magnification;          % std of gaussian kernel (half width/height of neuron)
 p = 0;                                            % order of autoregressive system (p = 0 no dynamics, p=1 just decay, p = 2, both rise and decay)
 merge_thr = 0.6;                                  % merging threshold
 tsub=20;
@@ -54,6 +61,7 @@ options = CNMFSetParms(...
     'temporal_iter',2,...                       % number of block-coordinate descent steps
     'ssub',magnification,...
     'tsub',tsub,...
+    'save_memory',1,...
     'max_size', 6*magnification,...
     'merge_thr',merge_thr,...                    % merging threshold
     'gSig',tau...
@@ -73,11 +81,8 @@ display(sprintf('run patches in %d min',round(toc/60)));
 contour_threshold = 0.95;                 % amount of energy used for each component to construct contour plot
 K_m = size(C,1);
 %[A_or,C_or,S_or,P] = order_ROIs(A,C,S,P); % order components
-try
-    [sig,S_df] = extract_DF_F(data,[A_or,b],[C_or;f],K_m+1); % extract DF/F values (sig) and spiking info
-catch
+%     [sig,S_df] = extract_DF_F(data,[A_or,b],[C_or;f],K_m+1); % extract DF/F values (sig) and spiking info
     [sig,S_df] = extract_DF_F(data,[A,b],[C;f],K_m+1); % extract DF/F values (sig) and spiking info
-end
 
 % try
 %     V=data.V;
@@ -91,11 +96,8 @@ end
 % end
 V=reshape(P.sn,sizY(1),sizY(2));
 
-try
-    [Coor,json_file] = plot_contours(A_or,V,contour_threshold,1);
-catch
+%    [Coor,json_file] = plot_contours(A_or,V,contour_threshold,1);
     [Coor,json_file] = plot_contours(A,V,contour_threshold,1);
-end
 %% save signals into different files
 fname=sprintf('%s_%dcell_tau%d_%d_tsub%d',nam,K_m,tau(1),tau(2),tsub);
 
@@ -113,3 +115,7 @@ try
     end
 catch
 end
+endtime=datetime;
+display(fname)
+display(starttime);
+display(endtime);

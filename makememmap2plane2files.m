@@ -1,14 +1,19 @@
 function newnames=makememmap2plane2files;
-%% define the name
+%% define the name and save to MPS-ZFS directly
+path=pwd;
+zfs_path=strrep(path,'c:','\\mps-zfs\data\jsun');
+
 files = dir('*.sbx');
-newnames{1}=[files(1).name(1:end-5) 'x_1_memmap.mat'];
-newnames{2}=[files(1).name(1:end-5) 'x_2_memmap.mat'];
+newnames{1}=fullfile(zfs_path,[files(1).name(1:end-5) 'x_1_memmap.mat']);
+newnames{2}=fullfile(zfs_path,[files(1).name(1:end-5) 'x_2_memmap.mat']);
 if exist(newname{1},'file')
-    return;
+   disp([' memmap file already existing']);return;
+elseif ~exist(zfs_path,'dir')
+    mkdir(zfs_path);
 end
+
 data1 = matfile(newnames{1},'Writable',true);
 data2 = matfile(newnames{2},'Writable',true);
-
 disp(sprintf('Saving memmapfiles for 2 planes:%s,%s',newnames{1},newnames{2}));
 
 %% save each piece
@@ -23,23 +28,24 @@ for i=1:numel(files)
     
     V1=zeros(info.sz);
     V2=zeros(info.sz);
-    fac=sqrt(info.max_idx);
+    fac=sqrt(info.max_idx+1);
     
-    eachsize(i)=info.max_idx/2;
+    eachsize(i)=(info.max_idx+1)/2;
     tic
     if i==1
-        data1.Y=zeros([info.sz info.max_idx/2],'uint16');
-        data2.Y=zeros([info.sz info.max_idx/2],'uint16');
+        data1.Y=zeros([info.sz (info.max_idx+1)/2],'uint16');
+        data2.Y=zeros([info.sz (info.max_idx+1)/2],'uint16');
         data1.V=zeros(info.sz);
         data2.V=zeros(info.sz);
-        
+        data1.m=zeros(info.sz);
+        data2.m=zeros(info.sz);
         u=0;v=0;
     else
         [u1 v1] = fftalign(m1(:,:,i),m1(:,:,1));
         [u2 v2] = fftalign(m2(:,:,i),m2(:,:,1));
     end
    
-    for j=0:info.max_idx-1
+    for j=0:info.max_idx
         z =sbxread(fn,j,1);
         z= squeeze(z);
         if mod(j,2)==0
@@ -55,22 +61,37 @@ for i=1:numel(files)
             fprintf('File %d Frame %d/%d for %.2f seconds\n ',i,j,info.max_idx,toc);
         end
     end
+    
     V=cat(3,V1,V2);
     save([fn '.align'],'V','-append');
+    
     ratio=T/(T+eachsize(i));
     data1.V=data1.V*ratio+V1*(1-ratio);
     data2.V=data2.V*ratio+V2*(1-ratio);
-    
+    data1.m=data1.m*ratio+circshift(double(m1(:,:,i)),[u1 v1])*(1-ratio);
+    data2.m=data2.m*ratio+circshift(double(m2(:,:,i)),[u2 v2])*(1-ratio);
     T=T+eachsize(i);
 
 end
-assert(T==info.max_idx/2,'the total image size is not matched!');
-data1.eachsize=eachsize;
-data1.sizY =[info.sz T];
-data1.Yr = reshape(data1.Y,prod(info.sz),T);
-data1.nY = min(reshape(data1.Yr,prod(info.sz)*T,1));
 
+data1.eachsize=eachsize;
 data2.eachsize=eachsize;
-data2.sizY =[info.sz T];
+
 data2.Yr = reshape(data2.Y,prod(info.sz),T);
+data1.Yr = reshape(data1.Y,prod(info.sz),T);
+
+data1.nY = min(reshape(data1.Yr,prod(info.sz)*T,1));
 data2.nY = min(reshape(data2.Yr,prod(info.sz)*T,1));
+
+data1.sizY =[info.sz T];
+data2.sizY =[info.sz T];
+
+if mod(info.config.magnification*2,5) == 0
+    magnification = info.config.magnification*2/5;
+else
+    magnification = info.config.magnification;
+end
+
+data1.magnification = magnification;
+data2.magnification = magnification;
+

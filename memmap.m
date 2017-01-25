@@ -14,8 +14,13 @@ if nargin<2
     end
 end
 if nargin<3
-    picsiz=[240 600 100 786-5]; %% first two for vertical axis: 1-768
-    %bidirection [10 758 120 768]
+    if numel(strfind(nam,'_'))<3
+        picsiz=[1 768 1 796] + [5 -5 5 -5];
+    else
+        picsiz=[100 760 10 786];
+    %two planes [100 760 10 786]
+    %bidirectional and two planes [150 760 134 786]
+    end
 end
 
 %% Set parameters
@@ -33,24 +38,17 @@ try
 catch
     sizY = size(data,'Y');                  % size of data matrix
 end
-% 
-% if ~exist('patchf')
-%     %     mag=ceil(sqrt(sizY(3)/16000)); % if too many frames, chop the patch sizes to smaller ones
-%     mag=1;
-%     patchf=[ceil(sizY(1)*mag/80) ceil(sizY(2)*mag/80)];
-% end
-% 
-% display(patchf);
-% patch_size = [ceil(sizY(1)/patchf(1)*1.1),ceil(sizY(2)/patchf(2)*1.1)];                   % size of each patch along each dimension (optional, default: [32,32])
-% overlap = [ceil(sizY(1)/patchf(1)*.05),ceil(sizY(2)/patchf(2)*.05)];                        % amount of overlap in each dimension (optional, default: [4,4])
-
-patch_size = [128,100];                   % size of each patch along each dimension (optional, default: [32,32])
-overlap = [12,8];                        % amount of overlap in each dimension (optional, default: [4,4])
+pcsX = picsiz(2)-picsiz(1) ;
+pcsY = picsiz(4)-picsiz(3);
+patch_size(1) = ceil(mod(pcsX,120)/floor(pcsX/120))+120+8 ;
+patch_size(2) = ceil(mod(pcsY,120)/floor(pcsY/120))+120+12 ;
+% size of each patch along each dimension (optional, default: [128,120])
+overlap = [8,12];                        % amount of overlap in each dimension (optional, default: [4,4])
 patches = construct_partial_patches(picsiz,patch_size,overlap);
 %K = ceil(sizY(1)*sizY(2)/10000/prod(patchf))    % number of components to be found
 %K=ceil(40/prod(patchf));
-K=5;
-tau = [5,3]*magnification;          % std of gaussian kernel (half width/height of neuron)
+K=10;
+tau = [3,5]*magnification;          % std of gaussian kernel (half width/height of neuron)
 p = 0;                                            % order of autoregressive system (p = 0 no dynamics, p=1 just decay, p = 2, both rise and decay)
 merge_thr = 0.6;                                  % merging threshold
 tsub=20;
@@ -100,7 +98,7 @@ V=reshape(P.sn,sizY(1),sizY(2));
     [Coor,json_file] = plot_contours(A,V,contour_threshold,1);
 %% save signals into different files
 fname=sprintf('%s_%dcell_tau%d_%d_tsub%d',nam,K_m,tau(1),tau(2),tsub);
-
+cpath=
 sig=sig';
 save([fname '.signals'],'sig','S_df');
 savejson('jmesh',json_file,[fname '.jmesh']);        % optional save json file with component coordinates (requires matlab json library)
@@ -119,3 +117,5 @@ endtime=datetime;
 display(fname)
 display(starttime);
 display(endtime);
+% sendmail('j.suninchina@gmail.com','Finished project', ...
+%          [fname 'finished']);

@@ -42,11 +42,11 @@ switch memmapchoice
         for i=1:numel(d)
             fn = strtok(d(i).name,'.');
             newnames= makememmap2plane(fn);
-            for j=1:2
-                pos = strfind(newnames{j},'_memmap.mat');
-                fname= memmap(newnames{j}(1:pos-1));
-                disp(sprintf('finished cell extraction for %s in %d seconds',fname,toc));
-            end
+%             for j=1:2
+%                 pos = strfind(newnames{j},'_memmap.mat');
+%                 fname= memmap(newnames{j}(1:pos-1));
+%                 disp(sprintf('finished cell extraction for %s in %d seconds',fname,toc));
+%             end
         end
     case 3 %Multiple files
         sbxaligndir;

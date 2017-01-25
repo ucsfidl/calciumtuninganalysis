@@ -17,7 +17,7 @@ for(i=1:numel(d))
             sbxread(fn,1,1);        % read one frame to read the header of the image sequence
             global info;
             tic
-            [m,T] = sbxalignx(fn,0:info.max_idx-1);   %
+            [m,T] = sbxalignx(fn,0:info.max_idx);   %
             save([fn '.align'],'m','T');
             display(sprintf('Done %s: Aligned %d images in %d min',fn,info.max_idx,round(toc/60)));
             clear('info','m','T','mx');

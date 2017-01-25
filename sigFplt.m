@@ -1,4 +1,5 @@
-function [h,Gd]=sigFplt(sigF,matrix,window,Cor);
+
+function h=sigFplt(sigF,matrix,window,Cor)
 % sigF seg*rep*Var*ncell
 % maxtrix rep*Var
 
@@ -9,7 +10,7 @@ seg=size(sigF,1);
 rep=size(sigF,2);
 Var=size(sigF,3);
 ncell=size(sigF,4);
-Gd=[];
+%Gd=[];
 if ~exist('Cor')
     Cor=1:ncell;
 end
@@ -47,8 +48,8 @@ for j=1:page
         text(seg*1.1,ymax/2,['cell#' num2str(Cor(nth))],'HorizontalAlignment','right');
         
     end
-    drawnow;
-    answer = inputdlg('Enter gd cells','Pick gd cells',[1 80],{num2str(Cor(nth))});
-    Gd=[Gd str2num(answer{1})];   
+     drawnow;
+%     answer = inputdlg('Enter gd cells','Pick gd cells',[1 80],{num2str(Cor(nth))});
+%     Gd=[Gd str2num(answer{1})];   
 end
 disp(toc)

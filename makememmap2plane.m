@@ -1,7 +1,7 @@
 function newnames=makememmap2plane(fn);
 %% define the name
 path=pwd;
-zfs_path=strrep(path,'c:','\\mps-zfs\data\jsun');
+zfs_path=strrep(path,'C:','\\mps-zfs\data\jsun');
 
 newnames{1}=fullfile(zfs_path,[fn '_1_memmap.mat']);
 newnames{2}=fullfile(zfs_path,[fn '_2_memmap.mat']);
@@ -22,14 +22,21 @@ sbxread(fn,1,1);% read one frame to read the header of the image sequence
 global info;
 
 nY = Inf;
-T=(info.max_idx+1)/2;
 m1=info.aligned.m(:,:,1);
 m2=info.aligned.m(:,:,2);
 V1=zeros(info.sz);
 V2=zeros(info.sz);
-fac=sqrt(T-1);
-data1.Y=zeros([info.sz T],'uint16');
-data2.Y=zeros([info.sz T],'uint16');
+T2=floor((info.max_idx+1)/2);
+T1=info.max_idx+1-T2;
+fac=sqrt(info.max_idx);
+data1.Y=zeros([info.sz T1],'uint16');
+data2.Y=zeros([info.sz T2],'uint16');
+
+% data1.Yr = zeros([prod(info.sz) T1],'uint16');
+% data2.Yr = zeros([prod(info.sz) T2],'uint16');
+% 
+% data1.nY = inf;
+% data2.nY = inf;
 
 for j=0:info.max_idx
     z =sbxread(fn,j,1);
@@ -37,10 +44,18 @@ for j=0:info.max_idx
     if mod(j,2)==0
         img = circshift(z,info.aligned.T(j+1,:)); % align the image
         data1.Y(:,:,j/2+1) = img;
+%         data1.Yr(:,j/2+1) = reshape(img,:,1);
+%         if data1.nY > min(data1.Yr(:,j/2+1))
+%             data1.nY = min(data1.Yr(:,j/2+1));
+%         end
         V1=V1+((double(img-m1))/fac).^2;
     else
         img = circshift(z,info.aligned.T(j+1,:)); % align the image
         data2.Y(:,:,(j+1)/2) = img;
+%         data2.Yr(:,(j+1)/2) = reshape(img,:,1);
+%         if data2.nY > min(data2.Yr(:,(j+1)/2))
+%             data2.nY = min(data2.Yr(:,(j+1)/2));
+%         end
         V2=V2+((double(img-m2))/fac).^2;
     end
     
@@ -54,14 +69,14 @@ end
 data1.V=V1;
 data2.V=V2;
 % assert(T==(info.max_idx+1)/2,'the total image size is not matched!');
-data1.sizY =[info.sz T];
-data2.sizY =[info.sz T];
+data1.sizY =[info.sz T1];
+data2.sizY =[info.sz T2];
 
-data1.Yr = reshape(data1.Y,prod(info.sz),T);
-data2.Yr = reshape(data2.Y,prod(info.sz),T);
+data1.Yr = reshape(data1.Y,prod(info.sz),T1);
+data2.Yr = reshape(data2.Y,prod(info.sz),T2);
 
-data1.nY = min(reshape(data1.Yr,prod(info.sz)*T,1));
-data2.nY = min(reshape(data2.Yr,prod(info.sz)*T,1));
+data1.nY = min(reshape(data1.Yr,prod(info.sz)*T1,1));
+data2.nY = min(reshape(data2.Yr,prod(info.sz)*T2,1));
 
 data1.m = m1;
 data2.m = m2;

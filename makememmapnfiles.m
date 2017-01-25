@@ -1,7 +1,7 @@
 function newname=makememmapnfiles;
 %% define the name and save to MPS-ZFS directly
 path=pwd;
-zfs_path=strrep(path,'c:','\\mps-zfs\data\jsun');
+zfs_path=strrep(path,'C:','\\mps-zfs\data\jsun');
 
 files = dir('*.sbx');
 newname=[files(1).name(1:end-5) 'x_memmap.mat'];

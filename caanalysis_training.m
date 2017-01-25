@@ -10,6 +10,7 @@ close all;clear all;global info;
 
 %% load calcium signal and open recorded image
 [f,p]=uigetfile('.signals','load calcium signal data .signals');
+
 load(fullfile(p,f),'-mat');
 if strfind(f,'pick')
     load([f(1:strfind(f,'pick')-1) '.signals'], '-mat');
@@ -18,7 +19,7 @@ end
 [temp,path]=uigetfile('*.sbx','Pick the corresponding sbx file');
 fname=fullfile(path,strtok(temp,'.'));
 
-multiplane=3-menu('is it part of the multiplane data?','Yes-part1','Yes-part2','No');
+multiplane=2-menu('is it part of the multiplane data?','Yes','No');
 
 if ~exist('sig')
     sig=sig_chunk;
@@ -26,11 +27,12 @@ end
 if size(sig,1)<size(sig,2)
     sig=sig';
 end
+total=size(sig,2);
 
 if ~exist('Cor')
-    Cor=1:size(sig,2);
+    Cor=1:total;
 else
-    bad=setdiff(1:size(sig,2),Cor);
+    bad=setdiff(1:total,Cor);
 end
 
 sig=sig(:,Cor);
@@ -38,21 +40,13 @@ sig=sig(:,Cor);
 
 movement=preprocess(fname);
 CAframeHz =info.resfreq/info.recordsPerBuffer;
-% if multiplane
-%     info.frame = ceil(info.frame/2);
-% end
-
-%CAlineHz = info.config.lines;
+CAlineHz = info.config.lines;
 %just for plotting purpose,assign stimtype to all the ON frames
 stim=zeros(1,info.max_idx+1); 
-% imagingsig=info.frame(1):info.frame(end);
-% stimsig= (imagingsig-info.frame(1))*(numel(info.sttype)-1)/(info.frame(end)-info.frame(1))+1;
-% stim(imagingsig)= info.sttype(round(stimsig));
-
-
-for i=1:(numel(info.frame)/2)
-    stim(info.frame(i*2-1):info.frame(i*2))=info.stimtype(i);
-end
+imagingsig=info.frame(1):info.frame(end);
+stimsig= (imagingsig-info.frame(1))*(numel(info.sttype)-1)/(info.frame(end)-info.frame(1))+1;
+stim(imagingsig)= info.sttype(round(stimsig));
+figure;plot(stim);hold on;plot(info.frame,stim(info.frame),'*')
 
 if movement
     try
@@ -64,9 +58,7 @@ if movement
     % load([fname '.eye'],'-mat');
     sp=conv(speed,ones(1,ceil(CAframeHz*1))/ceil(CAframeHz*1),'same'); %conv the speed into with a 1s filter
     if numel(sp) >= info.max_idx*2
-        velocity=interp1(1:1/2:(info.max_idx+1), sp(1:info.max_idx*2+1),1:(info.max_idx+1)); % downsampling the speed into the frame num     
-    elseif multiplane
-            velocity=interp1(1:(info.max_idx+1), sp,1:2:(info.max_idx+1));
+        velocity=interp1(0:1/2:info.max_idx, sp(1:info.max_idx*2+1),0:info.max_idx); % downsampling the speed into the frame num
     else
         velocity=sp;
     end
@@ -75,23 +67,25 @@ else
 end
 %% 
 
+if multiplane
+    sig = interp(sig,2);
+end
 if size(stim,2)> size(sig,1)
     stim(size(sig,1)+1:end)=[];
 end
-example=unique(randi(Cor(end),1,10));
-hsig=sigplt(sig(:,example),[stim/max(stim);velocity/max(velocity)],Cor(example)); %
+hsig=sigplt(sig,[stim/max(stim);velocity/max(velocity)],Cor); %
 % baseline=prctile(sig,20,1);
 % sig=sig./repmat(baseline,size(sig,1),1)-1;
+
 %% set paramenter for stimulus
 ncell=size(sig,2);
 prestim=ceil(CAframeHz*1); %use 1s baseline
-stimON=info.frame(2)-info.frame(1); % StimON duration
-seg = prestim+min(info.frame(3:2:end)-info.frame(1:2:(end-2))); % segment=prestim+info.frame(TTL ON+TTL off )
-% stimON = ceil(CAframeHz*2);
-% seg = prestim + stimON;
+% stimON=info.frame(2)-info.frame(1); % StimON duration
+% seg = prestim+min(info.frame(3:2:end)-info.frame(1:2:(end-2))); % segment=prestim+info.frame(TTL ON+TTL off )
+stimON = ceil(CAframeHz*2);
+seg = prestim + stimON;
 Var=numel(unique(info.stimtype));% calculate types of stimulus, orientations, contrast, etc
 rep=floor(min(2*numel(info.stimtype),numel(info.frame))/2/Var); %calculate repetitions
-
 sigT=zeros(seg*rep,Var,ncell); % build sigT based on signals from sig and organized according to segment
 frame_on=zeros(Var,rep); %tag frame_on of each seg
 window=prestim:prestim+stimON;
@@ -107,38 +101,35 @@ for j=1:Var
     on=ori*2-1;
     frame_on(j,:)=info.frame(on(1:rep)); % the frame marking the prestim timepoint size 1*rep
     temp=ones(seg,1)*frame_on(j,:)+ (0:seg-1)'*ones(1,rep)-prestim; % array seg*rep6
-    if temp(1,1)==0
-        temp(1,1)=1;
-    end
     sigT(:,j,:)=sig(temp,:);   %(seg*rep)*Var*ncell
 end
 
 sigT=reshape(sigT,seg,rep,Var,ncell);
 %% select cells based on their peak responses
-% 
-% if ~isempty(strfind(f,'memmap')) & isempty(strfind(f,'pick2'))
-%     hcell=openfig([f(1:findstr(f,'cell')+3) '.fig']);
-%     if ~exist('bad','var')
-%         bad=pick(f);
-%     end
-%     [bad2,hpick]=pick2(sigT,window,Cor);
-%     bad=unique([bad bad2]);
-%     if ~isempty(bad)
-%         Cor = setdiff(1:ncell,bad);
-%         ncell= numel(Cor);
-%         newf=[f(1:end-8) 'pick2ed' num2str(ncell)];
-%         
-%         axesObjs = get(hcell, 'Children');  %axes handles
-%         dataObjs = get(axesObjs, 'Children');
-%         temp=dataObjs(total+1-bad);
-%         delete(temp);
-%         savefig(hcell,[newf '.fig']);
-%         
-%         sig=sig(:,Cor);
-%         sigT=sigT(:,:,:,Cor);
-%         save([newf '.signals'],'Cor');
-%     end
-% end
+
+if ~isempty(strfind(f,'memmap')) & isempty(strfind(f,'pick2'))
+    hcell=openfig([f(1:findstr(f,'cell')+3) '.fig']);
+    if ~exist('bad','var')
+        bad=pick(f);
+    end
+    [bad2,hpick]=pick2(sigT,window,Cor);
+    bad=unique([bad bad2]);
+    if ~isempty(bad)
+        Cor = setdiff(1:ncell,bad);
+        ncell= numel(Cor);
+        newf=[f(1:end-8) 'pick2ed' num2str(ncell)];
+        
+        axesObjs = get(hcell, 'Children');  %axes handles
+        dataObjs = get(axesObjs, 'Children');
+        temp=dataObjs(total+1-bad);
+        delete(temp);
+        savefig(hcell,[newf '.fig']);
+        
+        sig=sig(:,Cor);
+        sigT=sigT(:,:,:,Cor);
+        save([newf '.signals'],'Cor');
+    end
+end
 
 %% syn with ball/eye motion
 if movement
@@ -282,17 +273,13 @@ end
 mark=findstr(fname,'_');
 date=fname(mark(1)+1:mark(2)-1);
 serial=fname(mark(2)+1:end);
-if multiplane
-    folder=fullfile([ date '-' serial '-' num2str(3-multiplane) ],['picked' num2str(numel(Cor))],['drawingoption' num2str(drawingoption)]);
-else
-    folder=fullfile([ date '-' serial ],['picked' num2str(numel(Cor))],['drawingoption' num2str(drawingoption)]);
-end
+folder=fullfile([ date '-' serial ],['picked' num2str(numel(Cor))],['drawingoption' num2str(drawingoption)]);
 if ~exist(folder,'dir')
     mkdir(folder);
 end
 
 SI.sigF = sigF;
-save(fullfile(folder,'peakSI.mat'),'SI','matrix','window','Cor');
+save(fullfile(folder,'peakSI.mat'),'SI','Gd','matrix','window','Cor');
 
 for i=1:numel(hsigF)
     saveas(hsigF(i),fullfile(folder,hsigF(i).Name),'png');
@@ -308,7 +295,7 @@ if exist('hrun')
     end
 end
 
-if exist('hparse')
+if exist('hparse')c
     for i=1:numel(hparse)
         saveas(hparse(i),fullfile(folder,hparse(i).Name),'png');
     end

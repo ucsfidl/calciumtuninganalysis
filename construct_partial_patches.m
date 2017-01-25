@@ -15,15 +15,15 @@ function patches = construct_patches(sizY,siz,overlap,min_size)
 dimY = length(sizY)/2;    % dimension of dataset (2d or 3d)
 
 if nargin < 4 || isempty(min_size)
-    min_size = [8,8,3*ones(1,dimY-2)];
+    min_size = [20,20,3*ones(1,dimY-2)];
 end
 
 if nargin < 3 || isempty(overlap)
-    overlap = [4,4,2*ones(1,dimY-2)];
+    overlap = [8,12,2*ones(1,dimY-2)];
 end
 
 if nargin < 2 || isempty(siz)
-    siz = [32,32,4*ones(1,dimY-2)];
+    siz = [128,120,4*ones(1,dimY-2)];
 end
 
 if any(siz<=overlap); error('Size of patch must be greater than the amount of overlap'); end

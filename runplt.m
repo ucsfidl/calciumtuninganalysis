@@ -23,11 +23,11 @@ title('average speed')
 xlabel('speed')
 drawnow;
 
-cutoff1=inputdlg('define states','',1,{'2'});
+cutoff1=inputdlg('define states','',1,{'1'});
 acc_thr=str2num(cutoff1{1});
 % subplot(1,3,1);hold on;
 % plot([ 1 rep],[acc_thr acc_thr],'--');
-cutoff2=inputdlg('define states','',1,{'1'});
+cutoff2=inputdlg('define states','',1,{'.5'});
 run_thr=str2num(cutoff2{1});
 % subplot(1,3,2);hold on;
 % plot([ 1 rep],[run_thr run_thr],'--');

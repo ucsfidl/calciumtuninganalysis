@@ -223,7 +223,7 @@ switch drawingoption
     case 11  %'running with orientation'
         hsigF=sigFplt(sigF,matrix,window,Cor);  % sigF:seg,rep,Var,ncell
         [~,SI.peakR,SI.errorR,~,SI.peakS,SI.errorS]= sigFcmp(sigF,window,matrix);  % sigR:seg,1,Var,ncell
-        hpk(1)=polarplt(cat(1,SI.peakR,SI.peakS),Cor);
+        hpk(1)=fitplt(cat(1,SI.peakR,SI.peakS),cat(1,SI.errorR,SI.errorS),Cor);
         
         
         SI.OSI_R=calOSI(SI.peakR);

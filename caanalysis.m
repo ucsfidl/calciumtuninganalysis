@@ -78,6 +78,9 @@ end
 if size(stim,2)> size(sig,1)
     stim(size(sig,1)+1:end)=[];
 end
+if size(velocity,2)> size(sig,1)
+    velocity(size(sig,1)+1:end)=[];
+end
 example=unique(randi(Cor(end),1,10));
 hsig=sigplt(sig(:,example),[stim/max(stim);velocity/max(velocity)],Cor(example)); %
 % baseline=prctile(sig,20,1);

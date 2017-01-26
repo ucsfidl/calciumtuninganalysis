@@ -81,7 +81,7 @@ data2.nY = min(reshape(data2.Yr,prod(info.sz)*T2,1));
 data1.m = m1;
 data2.m = m2;
 
-if mod(info.config.magnification*2,5) == 0
+if info.config.magnification~=2 && info.config.magnification~=1 
     magnification = info.config.magnification*2/5;
 else
     magnification = info.config.magnification;

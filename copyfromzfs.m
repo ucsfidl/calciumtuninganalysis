@@ -8,12 +8,7 @@ if ~exist(cpath)
 end
 
 try
-copyfile('*.signals',cpath);
-catch
-end
-
-try
-copyfile('*.png*',cpath);
+copyfile('*cell_tau*',cpath);
 catch
 end
 

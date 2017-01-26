@@ -13,8 +13,8 @@ if ~isfield(info,'stimtype')   %read psychostim stim info to match TTL event rec
     file=dir([fname '.sbx']);
     recordedtime=file.date;
     [day,time]=strtok(recordedtime)
-    [f2,p2]=uigetfile(['C:\2pdata\stimulus\' day],['find stim info just before' time]); %'
-    %[f2,p2]=uigetfile(['\\mps-pc38\Documents\Matlab\' day],['find stim info just before' time]);%'
+    [f2,p2]=uigetfile(['\\mps-pc53\2pdata\stimulus\' day],['find stim info just before' [day time]); %'
+    %[f2,p2]=uigetfile(['\\mps-pc38\Documents\Matlab\stimulus\' day],['find stim info just before' time]);%'
     load(fullfile(p2,f2), '-mat');
     sttype = intanSyncData(:,1);% the variable IntanSyncData has all of the useful information
     info.stimtype=sttype(1: find(diff(sttype),1):end);%find(diff(sttype),1) can define the length of ON and OFF, so, info.stimtype reads the first frame of each stimulus

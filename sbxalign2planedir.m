@@ -22,7 +22,7 @@ for(i=1:length(d))
             [m(:,:,2),T(2:2:info.max_idx+1,:)] = sbxalignx(fn,1:2:info.max_idx);
             save([fn '.align'],'m','T');
             clear m T;
-            display(sprintf('Done %s: Aligned %d images in %d min',fn,info.max_idx,round(toc/60)));
+            display(sprintf('Done %s: Aligned %d images in %d min',fn,info.max_idx+1,round(toc/60)));
         else
             sprintf('File %s is already aligned',fn)
         end

@@ -97,13 +97,13 @@ V=reshape(P.sn,sizY(1),sizY(2));
 %    [Coor,json_file] = plot_contours(A_or,V,contour_threshold,1);
     [Coor,json_file] = plot_contours(A,V,contour_threshold,1);
 %% save signals into different files
-fname=sprintf('%s_%dcell_tau%d_%d_tsub%d',nam,K_m,tau(1),tau(2),tsub);
-cpath=
+resultname=sprintf('%s_%dcell_tau%d_%d_tsub%d',nam,K_m,tau(1),tau(2),tsub);
+fname=strrep(resultname,'\\mps-zfs\data\jsun','\\mps-pc53\');
 sig=sig';
 save([fname '.signals'],'sig','S_df');
 savejson('jmesh',json_file,[fname '.jmesh']);        % optional save json file with component coordinates (requires matlab json library)
-savefig(gcf,[fname '.fig']);
-
+saveas(gcf,[fname '.fig'],'fig');
+saveas(gcf,[fname '.png'],'png');
 try
     T=0;
     for n=1:numel(data.eachsize)
